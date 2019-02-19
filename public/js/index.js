@@ -8,6 +8,25 @@ socket.on('connect', () => {
   });
 
   socket.on('newMsg', msg => {
-    console.log('New msg', msg);
+    const li = $('<li></li>');
+    li.text(`${msg.from}: ${msg.text}`);
+    $('#messages').append(li);
   });
 });
+
+
+const createMsg = (from, text) => {
+  socket.emit('createMsg', {
+    from,
+    text
+  }, (res) => {
+    console.log('Got it', res);
+  })
+}
+
+
+$('#form').on('submit', (ev) => {
+  ev.preventDefault()
+
+  createMsg('Jhon', $('#text').val())
+})
