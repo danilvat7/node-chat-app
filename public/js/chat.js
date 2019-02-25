@@ -16,44 +16,59 @@ function scrollToBottom() {
   messages.scrollTop(scrollHeight);
 }
 socket.on('connect', () => {
-  console.log('Connected to server');
+  const params = $.deparam(window.location.search);
 
-  socket.on('disconnect', () => {
-    console.log('Disconnected from server');
+  socket.emit('join', params, (err) => {
+    if (err) {
+      alert(err);
+      window.location.href = '/';
+    } else {
+      console.log('No error');
+    }
   });
+});
 
-  socket.on('newMsg', msg => {
-    const formattedTime = moment(msg.createdAt).format('h:mm a');
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+});
 
-    const tmp = $('#msg-template').html();
-    const html = Mustache.render(tmp, {
-      text: msg.text,
-      from: msg.from,
-      createdAt: formattedTime
-    });
-    $('#messages').append(html);
-    scrollToBottom();
+socket.on('updateUserList', (users) => {
+  const ol = $('<ol></ol>');
+  users.forEach(user => {
+    ol.append($(`<li></li>`).text(user))
   });
+  $('#users').html(ol);
+});
 
-  socket.on('newLocMsg', msg => {
-    const formattedTime = moment(msg.createdAt).format('h:mm a');
+socket.on('newMsg', msg => {
+  const formattedTime = moment(msg.createdAt).format('h:mm a');
 
-    const tmp = $('#location-msg-template').html();
-    const html = Mustache.render(tmp, {
-      url: msg.url,
-      from: msg.from,
-      createdAt: formattedTime
-    });
-    $('#messages').append(html);
-    scrollToBottom();
+  const tmp = $('#msg-template').html();
+  const html = Mustache.render(tmp, {
+    text: msg.text,
+    from: msg.from,
+    createdAt: formattedTime
   });
+  $('#messages').append(html);
+  scrollToBottom();
+});
 
+socket.on('newLocMsg', msg => {
+  const formattedTime = moment(msg.createdAt).format('h:mm a');
+
+  const tmp = $('#location-msg-template').html();
+  const html = Mustache.render(tmp, {
+    url: msg.url,
+    from: msg.from,
+    createdAt: formattedTime
+  });
+  $('#messages').append(html);
+  scrollToBottom();
 });
 
 
-const createMsg = (from, text) => {
+const createMsg = (text) => {
   socket.emit('createMsg', {
-    from,
     text
   }, (res) => {
     console.log('Got it', res);
@@ -63,7 +78,7 @@ const createMsg = (from, text) => {
 
 $('#form').on('submit', (ev) => {
   ev.preventDefault()
-  createMsg('Jhon', $('#text').val())
+  createMsg($('#text').val())
 });
 
 const locationBtn = $('#send-location');
